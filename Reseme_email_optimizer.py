@@ -6,7 +6,6 @@ import ssl
 from pyresparser import ResumeParser
 import pdfplumber
 import re
-import secret
 import side_by_side_compare
 from ats_matric import ats_martic
 
@@ -28,7 +27,7 @@ nltk.download('stopwords', quiet=True)
 nltk.download('punkt', quiet=True)
 nltk.download('averaged_perceptron_tagger', quiet=True)
 
-client = OpenAI(api_key= secret.sk) 
+client = OpenAI(api_key=sk) 
 
 
 st.title("Resume Optimizer")
@@ -230,4 +229,5 @@ if st.button("Show ATS Metrics"):
         st.warning("Please inter a job desribption first")
     else:
         st.warning("Please optimize your resume first")
+
 
