@@ -1,7 +1,6 @@
 import streamlit as st
 from openai import OpenAI
 import docx2txt
-import streamlit as st
 import nltk
 import ssl
 from pyresparser import ResumeParser
@@ -231,3 +230,4 @@ if st.button("Show ATS Metrics"):
         st.warning("Please inter a job desribption first")
     else:
         st.warning("Please optimize your resume first")
+
