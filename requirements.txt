@@ -1,6 +1,6 @@
 openai
 docx2text
 nltk
-ssl
 pyresparser
 pdfplumber
+streamlit
