@@ -1,6 +1,6 @@
 streamlit
 openai
-docx2text
+docx2txt
 nltk
 pyresparser
 pdfplumber
