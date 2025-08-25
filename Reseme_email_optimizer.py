@@ -1,8 +1,33 @@
 import streamlit as st
-from openai import OpenAI
-import docx2txt
 import nltk
 import ssl
+# Fix SSL certificate issues for NLTK downloads - MUST BE AT TOP
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+# Download required NLTK data - MUST BE AT TOP
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords', quiet=True)
+
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
+
+try:
+    nltk.data.find('taggers/averaged_perceptron_tagger')
+except LookupError:
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+
+
+from openai import OpenAI
+import docx2txt
 from pyresparser import ResumeParser
 import pdfplumber
 import re
@@ -229,5 +254,6 @@ if st.button("Show ATS Metrics"):
         st.warning("Please inter a job desribption first")
     else:
         st.warning("Please optimize your resume first")
+
 
 
