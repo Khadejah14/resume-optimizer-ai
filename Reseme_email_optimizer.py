@@ -52,7 +52,7 @@ nltk.download('stopwords', quiet=True)
 nltk.download('punkt', quiet=True)
 nltk.download('averaged_perceptron_tagger', quiet=True)
 
-client = OpenAI(api_key=sk) 
+client = OpenAI(api_key=st.secrets["sk"]) 
 
 
 st.title("Resume Optimizer")
@@ -254,6 +254,7 @@ if st.button("Show ATS Metrics"):
         st.warning("Please inter a job desribption first")
     else:
         st.warning("Please optimize your resume first")
+
 
 
 
