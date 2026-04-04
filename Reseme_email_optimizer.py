@@ -33,6 +33,10 @@ import pdfplumber
 import re
 import side_by_side_compare
 from ats_matric import ats_martic
+import tempfile
+import os
+import docx2txt
+import PyPDF2
 
 if 'text' not in st.session_state:
     st.session_state.text = None
@@ -59,6 +63,11 @@ st.title("Resume Optimizer")
 file_uploader = st.file_uploader("Upload your resume", type=["pdf", "docx"])
 job_description= st.text_input("inter your job desription")
 
+# LinkedIn Profile Analyzer Section
+st.markdown("---")
+st.header("LinkedIn Profile Analyzer")
+linkedin_file = st.file_uploader("Upload your LinkedIn profile export (PDF or DOCX)", type=["pdf", "docx"], key="linkedin")
+
 #email = st.text_input("Past your email: ")
 
 def extract_text_from_each_file(file):
@@ -66,13 +75,76 @@ def extract_text_from_each_file(file):
         text = ""
         with pdfplumber.open(file) as pdf:
             for page in pdf.pages:
-                text += page.extract_text() + "\n"
+                page_text = page.extract_text()
+                if page_text is not None:
+                    text += page_text + "\n"
         return text
     elif file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         text = docx2txt.process(file)
+        if text is None:
+            text = ""
         return text
     else:
         return None
+
+def extract_text_from_linkedin_file_streamlit(uploaded_file):
+    """
+    Extracts text from a LinkedIn profile export file (PDF or DOCX) uploaded via Streamlit.
+    Returns the extracted text as a string.
+    """
+    if uploaded_file is None:
+        return ""
+    ext = os.path.splitext(uploaded_file.name)[1].lower()
+    text = ""
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
+        tmp_file.write(uploaded_file.read())
+        tmp_file_path = tmp_file.name
+    try:
+        if ext == ".pdf":
+            with open(tmp_file_path, "rb") as f:
+                reader = PyPDF2.PdfReader(f)
+                for page in reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+        elif ext in [".docx", ".doc"]:
+            text = docx2txt.process(tmp_file_path) or ""
+        else:
+            st.warning("Unsupported file type for LinkedIn profile.")
+    except Exception as e:
+        st.error(f"Error extracting LinkedIn profile: {e}")
+    finally:
+        os.unlink(tmp_file_path)
+    return text
+
+def analyze_linkedin_profile(text):
+    """
+    Analyzes the LinkedIn profile text for completeness and keyword optimization.
+    Returns a dictionary with analysis results and suggestions.
+    """
+    sections = [
+        "Summary", "Experience", "Education", "Skills", "Certifications", "Projects", "Languages", "Volunteer Experience"
+    ]
+    analysis = {}
+    lower_text = text.lower()
+    for section in sections:
+        found = section.lower() in lower_text
+        analysis[section] = "Present" if found else "Missing"
+    # Simple keyword density analysis (example keywords)
+    keywords = ["python", "machine learning", "data analysis", "project management", "leadership"]
+    keyword_counts = {kw: lower_text.count(kw) for kw in keywords}
+    suggestions = []
+    for section, status in analysis.items():
+        if status == "Missing":
+            suggestions.append(f"Add a {section} section to your profile.")
+    for kw, count in keyword_counts.items():
+        if count == 0:
+            suggestions.append(f"Consider adding the keyword '{kw}' if relevant.")
+    return {
+        "section_analysis": analysis,
+        "keyword_counts": keyword_counts,
+        "suggestions": suggestions
+    }
 
 def optimize_fun(text):
     user_prompt = f"Optimize the following resume for a job application:\n\n{text}\n\nMake it more professional and concise. Rewrite sentences to be ATS-friendly."
@@ -155,6 +227,24 @@ def parser_fun(text):
                 sections[current] +="\n" + line
     return sections  
 
+
+# LinkedIn Profile Analyzer UI logic
+if linkedin_file is not None:
+    with st.spinner("Analyzing your LinkedIn profile..."):
+        linkedin_text = extract_text_from_linkedin_file_streamlit(linkedin_file)
+        if linkedin_text:
+            result = analyze_linkedin_profile(linkedin_text)
+            st.subheader("Section Analysis")
+            for section, status in result["section_analysis"].items():
+                st.write(f"- **{section}**: {status}")
+            st.subheader("Keyword Counts")
+            for kw, count in result["keyword_counts"].items():
+                st.write(f"- **{kw}**: {count}")
+            st.subheader("Suggestions")
+            for suggestion in result["suggestions"]:
+                st.write(f"- {suggestion}")
+        else:
+            st.warning("No text could be extracted from the LinkedIn file.")
 
 if st.button("Optimize Resume"):
     #my bad way
